@@ -16,8 +16,9 @@ class StlinkV2UsbCom():
     """ST-Link/V2 USB communication class"""
     ID_VENDOR = 0x0483
     ID_PRODUCT = 0x3748
-    PIPE_OUT = 0x02
-    PIPE_IN = 0x81
+    CMD_PIPE_OUT = 0x02
+    CMD_PIPE_IN = 0x81
+    SWO_PIPE_IN = 0x83
     DEV_NAME = "V2"
 
     def __init__(self):
@@ -30,7 +31,7 @@ class StlinkV2UsbCom():
 
     def write(self, data, tout=200):
         """Write data to USB pipe"""
-        count = self._dev.write(self.PIPE_OUT, data, tout)
+        count = self._dev.write(self.CMD_PIPE_OUT, data, tout)
         if count != len(data):
             raise StlinkComException("Error Sending data")
 
@@ -42,7 +43,18 @@ class StlinkV2UsbCom():
         elif read_size % 4:
             read_size += 3
             read_size &= 0xffc
-        data = self._dev.read(self.PIPE_IN, read_size, tout).tolist()
+        data = self._dev.read(self.CMD_PIPE_IN, read_size, tout).tolist()
+        return data[:size]
+
+    def read_swo(self, size, tout=200):
+        """Read data from TRACING USB pipe"""
+        read_size = size
+        if read_size < 64:
+            read_size = 64
+        elif read_size % 4:
+            read_size += 3
+            read_size &= 0xffc
+        data = self._dev.read(self.SWO_PIPE_IN, read_size, tout).tolist()
         return data[:size]
 
 
@@ -50,8 +62,9 @@ class StlinkV21UsbCom(StlinkV2UsbCom):
     """ST-Link/V2-1 USB communication"""
     ID_VENDOR = 0x0483
     ID_PRODUCT = 0x374b
-    PIPE_OUT = 0x01
-    PIPE_IN = 0x81
+    CMD_PIPE_OUT = 0x01
+    CMD_PIPE_IN = 0x81
+    SWO_PIPE_IN = 0x83
     DEV_NAME = "V2-1"
 
 
@@ -87,6 +100,14 @@ class StlinkCom():
                 self._dev.write(data, tout)
             if rx_len:
                 return self._dev.read(rx_len)
+        except usb.core.USBError as err:
+            raise StlinkComException("USB Error: %s" % err)
+        return None
+
+    def read_swo(self, rx_len=16, tout=400):
+        """Read any SWO tracing data available"""
+        try:
+            return self._dev.read_swo(rx_len)
         except usb.core.USBError as err:
             raise StlinkComException("USB Error: %s" % err)
         return None

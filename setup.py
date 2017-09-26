@@ -14,7 +14,7 @@ def get_long_description():
 
 setuptools.setup(
     name='pyswd',
-    version='0.0.1',
+    version='0.0.2',
     description='SWD debugging tool',
     long_description=get_long_description(),
     url='https://github.com/pavelrevak/pyswd',

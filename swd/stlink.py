@@ -130,7 +130,7 @@ class Stlink():
             return self._str
 
 
-    def __init__(self, swd_frequency=1800000):
+    def __init__(self, swd_frequency=950000):
         self._com = stlinkcom.StlinkCom()
         self._version = self.get_version()
         self.leave_state()
@@ -149,6 +149,14 @@ class Stlink():
     def version(self):
         """ST-Link version"""
         return self._version
+
+    def _do_cmd_and_return_result(self, cmnd_id, size_res_bytes):
+        """perform the requested STLINK_DEBUG_COMMAND and return NUMERIC result"""
+        cmd = [
+            Stlink.STLINK_DEBUG_COMMAND,
+            cmnd_id]
+        res = self._com.xfer(cmd, rx_len=size_res_bytes)
+        return int.from_bytes(res[:size_res_bytes], byteorder='little')
 
     def get_version(self):
         """Read and decode version from ST-Link"""
@@ -198,6 +206,44 @@ class Stlink():
             Stlink.STLINK_DEBUG_A2_ENTER,
             Stlink.STLINK_DEBUG_ENTER_SWD]
         self._com.xfer(cmd, rx_len=2)
+
+    def start_trace_rx(self, baud_rate_hz=2000000, size_buf=4096):
+        """start trace rx"""
+        cmd = [
+            Stlink.STLINK_DEBUG_COMMAND,
+            Stlink.STLINK_DEBUG_A2_START_TRACE_RX]
+        cmd.extend(list(size_buf.to_bytes(2, byteorder='little')))
+        cmd.extend(list(baud_rate_hz.to_bytes(4, byteorder='little')))
+        res = self._com.xfer(cmd, rx_len=2)
+        return int.from_bytes(res[:2], byteorder='little')
+
+    def stop_trace_rx(self):
+        """stop trace rx"""
+        cmd = [
+            Stlink.STLINK_DEBUG_COMMAND,
+            Stlink.STLINK_DEBUG_A2_STOP_TRACE_RX]
+        res = self._com.xfer(cmd, rx_len=2)
+        return int.from_bytes(res[:2], byteorder='little')
+
+    def get_trace_buffered_count(self):
+        """get number bytes waiting in trace buffer (on another endpoint)"""
+        cmd = [
+            Stlink.STLINK_DEBUG_COMMAND,
+            Stlink.STLINK_DEBUG_A2_GET_TRACE_NB]
+        res = self._com.xfer(cmd, rx_len=2)
+        return int.from_bytes(res[:2], byteorder='little')
+
+    def get_last_rw_status(self):
+        """get_last_rw_status"""
+        return self._do_cmd_and_return_result(Stlink.STLINK_DEBUG_A2_GETLASTRWSTATUS, 2)
+
+    def run_core(self):
+        """run core"""
+        cmd = [
+            Stlink.STLINK_DEBUG_COMMAND,
+            Stlink.STLINK_DEBUG_RUNCORE]
+        res = self._com.xfer(cmd, rx_len=2)
+        return int.from_bytes(res[:2], byteorder='little')
 
     def get_coreid(self):
         """Get core ID from MCU"""
