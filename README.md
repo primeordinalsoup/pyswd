@@ -7,8 +7,7 @@ Allow to access not only STM32 MCUs!!!
 ## Installing
 ```bash
 sudo python3 setup.py  #installs to site-packages
-sudo python3 setup.py develop  #installs in place so changes to source
-apply instantly
+sudo python3 setup.py develop  #installs in place so changes to source apply instantly
 ```
 
 ## Packaging
