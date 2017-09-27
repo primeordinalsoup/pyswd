@@ -4,6 +4,22 @@ Debugging MCUs over SWD with ST-Link/V2 debugger
 
 Allow to access not only STM32 MCUs!!!
 
+## Installing
+```bash
+sudo python3 setup.py  #installs to site-packages
+sudo python3 setup.py develop  #installs in place so changes to source
+apply instantly
+```
+
+## Packaging
+You can make a debian package directly from this repo.  In the
+following example the maintainer is the debian package maintainer, and the
+version is the package version.
+```bash
+sudo apt-get install checkinstall
+sudo checkinstall --exclude=/usr/local/lib/python3.5/dist-packages/easy-install.pth --pkgversion=0.0.2 --pkglicense=MIT --maintainer='someone@example.com' --requires=python-usb -y python3 setup.py install
+```
+
 ## Python library
 
 Allow direct access to SWD
